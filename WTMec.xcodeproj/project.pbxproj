@@ -6,13 +6,35 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		22B032802EC10A8D00508238 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 22B0327F2EC10A8D00508238 /* Auth */; };
+		22B032822EC10A8D00508238 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 22B032812EC10A8D00508238 /* Functions */; };
+		22B032842EC10A8D00508238 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 22B032832EC10A8D00508238 /* PostgREST */; };
+		22B032862EC10A8D00508238 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 22B032852EC10A8D00508238 /* Realtime */; };
+		22B032882EC10A8D00508238 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 22B032872EC10A8D00508238 /* Storage */; };
+		22B0328A2EC10A8D00508238 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 22B032892EC10A8D00508238 /* Supabase */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		228E75B42EC0FADA009C64FF /* WTMec.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WTMec.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		22B032BD2EC1119D00508238 /* Exceptions for "WTMec" folder in "WTMec" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Untitled.swift,
+			);
+			target = 228E75B32EC0FADA009C64FF /* WTMec */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		228E75B62EC0FADA009C64FF /* WTMec */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				22B032BD2EC1119D00508238 /* Exceptions for "WTMec" folder in "WTMec" target */,
+			);
 			path = WTMec;
 			sourceTree = "<group>";
 		};
@@ -23,6 +45,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22B032842EC10A8D00508238 /* PostgREST in Frameworks */,
+				22B032822EC10A8D00508238 /* Functions in Frameworks */,
+				22B0328A2EC10A8D00508238 /* Supabase in Frameworks */,
+				22B032802EC10A8D00508238 /* Auth in Frameworks */,
+				22B032882EC10A8D00508238 /* Storage in Frameworks */,
+				22B032862EC10A8D00508238 /* Realtime in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +93,12 @@
 			);
 			name = WTMec;
 			packageProductDependencies = (
+				22B0327F2EC10A8D00508238 /* Auth */,
+				22B032812EC10A8D00508238 /* Functions */,
+				22B032832EC10A8D00508238 /* PostgREST */,
+				22B032852EC10A8D00508238 /* Realtime */,
+				22B032872EC10A8D00508238 /* Storage */,
+				22B032892EC10A8D00508238 /* Supabase */,
 			);
 			productName = WTMec;
 			productReference = 228E75B42EC0FADA009C64FF /* WTMec.app */;
@@ -94,6 +128,9 @@
 			);
 			mainGroup = 228E75AB2EC0FADA009C64FF;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				22B0327E2EC10A8D00508238 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 228E75B52EC0FADA009C64FF /* Products */;
 			projectDirPath = "";
@@ -253,7 +290,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = BT9VTC6BJK;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -281,7 +318,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = BT9VTC6BJK;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -324,6 +361,50 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		22B0327E2EC10A8D00508238 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		22B0327F2EC10A8D00508238 /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 22B0327E2EC10A8D00508238 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
+		};
+		22B032812EC10A8D00508238 /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 22B0327E2EC10A8D00508238 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Functions;
+		};
+		22B032832EC10A8D00508238 /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 22B0327E2EC10A8D00508238 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = PostgREST;
+		};
+		22B032852EC10A8D00508238 /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 22B0327E2EC10A8D00508238 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Realtime;
+		};
+		22B032872EC10A8D00508238 /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 22B0327E2EC10A8D00508238 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Storage;
+		};
+		22B032892EC10A8D00508238 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 22B0327E2EC10A8D00508238 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 228E75AC2EC0FADA009C64FF /* Project object */;
 }
