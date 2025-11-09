@@ -1,15 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
-    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>NSLocationWhenInUseUsageDescription</key>
-    <string>This app requires your location to display it on the map and send alerts with location info.</string>
-
-    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>This app may access your location in the background to track emergencies and send alerts.</string>
-
-    <key>NSLocationAlwaysUsageDescription</key>
-    <string>This app may access your location in the background to track emergencies and send alerts.</string>
+	<key>SUPABASE_API_KEY</key>
+	<string>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzZ2pjbHRzbGh4bGx5aGFzd21lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2ODY2NzksImV4cCI6MjA3ODI2MjY3OX0.wWzrDs75aHI3XBMAZsDbsybbYdBEON0tRAP0n0b3s24</string>
+	<key>TWILIO_API_KEY</key>
+	<string>5qN1nQ2AjRRzqKGCqynvGJPblbtNoYG3</string>
 </dict>
 </plist>

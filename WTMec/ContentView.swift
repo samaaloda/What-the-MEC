@@ -3,7 +3,7 @@ import MapKit
 
 
 import SwiftUI
-
+/*
 struct ContentView: View {
     var body: some View {
         Button("Send Test SMS") {
@@ -14,29 +14,54 @@ struct ContentView: View {
         .foregroundColor(.white)
         .cornerRadius(8)
     }
-}
+}*/
 
-/*
+
+// MARK: - Root ContentView
+import SwiftUI
+
 // MARK: - Root ContentView
 struct ContentView: View {
     @ObservedObject private var supabase = SupabaseManager.shared
     @State private var showSignIn = false
-    
+    @State private var showMedicalID = false
+
     var body: some View {
         NavigationView {
             if let _ = supabase.user {
-                // User signed in and verified - show main app with tabs
-                HomeView()
+                // User is signed in
+                if showMedicalID {
+                    MedicalIDView(onDone: {
+                        showMedicalID = false
+                    })
+                }
+                    else {
+                    // After Medical ID is completed, show main app
+                    HomeView()
+                }
             } else if showSignIn {
-                // Show sign in page
                 SignInView(showSignIn: $showSignIn)
             } else {
-                // Initial signup page
                 SignUpView(showSignIn: $showSignIn)
             }
         }
+        .onChange(of:  showSignIn) { user in
+            if user != nil {
+                // Show MedicalIDView on login
+                showMedicalID = true
+            }
+        }
     }
-}*/
+}
+
+// MARK: - Preview
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+    }
+}
+
+
 
 // MARK: - SignUp View
 struct SignUpView: View {
@@ -210,6 +235,11 @@ struct HomeView: View {
                 .tabItem {
                     Label("Monitor", systemImage: "sensor.fill")
                 }
+            MapViewContainer()
+                .padding()
+                .tabItem {
+                    Label("Map", systemImage: "map.fill")
+                }
             
             AccountView()
                 .tabItem {
@@ -343,9 +373,10 @@ struct AccountView: View {
         }
     }
 }
-
+/*
 // MARK: - Main App View (Earthquake & Sensors)
 struct MainAppView: View {
+    
     @StateObject private var earthquakeDetector = EarthquakeDetector()
     @StateObject private var waterDetector = WaterSubmersionSimulator()
     @StateObject private var soundDetector = SoundDetector()
@@ -378,29 +409,8 @@ struct MainAppView: View {
                                activeText: "⚠️ Loud Sound Detected!",
                                color: .orange)
                     
-                    TextField("Enter phone number", text: $phoneNumber)
-                        .keyboardType(.phonePad)
-                        .textFieldStyle(.roundedBorder)
-                        .padding(.horizontal)
                     
-                    Map(coordinateRegion: $region, showsUserLocation: true)
-                        .frame(height: 200)
-                        .cornerRadius(10)
-                        .padding(.horizontal)
                     
-                    HStack(spacing: 20) {
-                        Button("Start Monitoring") { startAll() }
-                            .padding()
-                            .background(Color.green.opacity(0.7))
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                        
-                        Button("Stop Monitoring") { stopAll() }
-                            .padding()
-                            .background(Color.red.opacity(0.7))
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
                 }
                 .padding()
             }
@@ -459,34 +469,979 @@ struct MainAppView: View {
     }
     
     private func sendAlert(message: String) {
-        SupabaseManager.shared.fetchContacts { contacts in
-            // Build the phone numbers list
-            let phoneNumbers = contacts.map { $0.number }
+        let userName = SupabaseManager.shared.getUserName()
+        let userPhone = SupabaseManager.shared.getUserPhone()
 
-            // Construct the full message
-            var fullMessage = message
-            if let loc = locationManager.lastLocation {
-                fullMessage += "\nLocation: https://maps.apple.com/?ll=\(loc.coordinate.latitude),\(loc.coordinate.longitude)"
+        guard !userName.isEmpty, !userPhone.isEmpty else {
+            print("⚠️ User info missing, sending directly to contacts")
+            sendToContacts(message: message)
+            return
+        }
+
+        // Construct user alert message
+        var userMessage = "⚠️ \(message)\nAre you okay? Reply YES within 30 seconds to cancel sending to contacts."
+        if let loc = locationManager.lastLocation {
+            userMessage += "\nLocation: https://maps.apple.com/?ll=\(loc.coordinate.latitude),\(loc.coordinate.longitude)"
+        }
+
+        // Send SMS to user first
+        TwilioManager.shared.sendSMS(to: userPhone, message: userMessage)
+        print("[Alert] Sent to user: \(userPhone)")
+
+        // Wait 30 seconds for confirmation
+        DispatchQueue.global().asyncAfter(deadline: .now() + 30) {
+            // Check if user responded (this requires storing user confirmation somewhere)
+            if !SupabaseManager.shared.userConfirmedAlert {
+                print("[Alert] User did not respond. Sending to emergency contacts.")
+                sendToContacts(message: message)
             } else {
-                fullMessage += "\nLocation: unavailable"
-            }
-
-            // Send SMS to all contacts
-            for number in phoneNumbers {
-                TwilioManager.shared.sendSMS(to: number, message: fullMessage)
+                print("[Alert] User confirmed, not contacting emergency contacts.")
+                // Reset confirmation for next alert
+                SupabaseManager.shared.userConfirmedAlert = false
             }
         }
     }
 
+    private func sendToContacts(message: String) {
+        SupabaseManager.shared.fetchContacts { contacts in
+            let phoneNumbers = contacts.map { contact in
+                var num = contact.number.trimmingCharacters(in: .whitespacesAndNewlines)
+                num = num.replacingOccurrences(of: "^\\+?1?", with: "", options: .regularExpression)
+                return "+1\(num)"
+            }
+
+            var fullMessage = message
+            if let loc = locationManager.lastLocation {
+                fullMessage += "\nUser: \(SupabaseManager.shared.getUserName())\n Location: https://maps.apple.com/?ll=\(loc.coordinate.latitude),\(loc.coordinate.longitude)"
+            }
+
+            for number in phoneNumbers {
+                TwilioManager.shared.sendSMS(to: number, message: fullMessage)
+            }
+            DispatchQueue.main.async {
+                print("[Alert] All messages to contacts queued.")
+            }
+        }
+    }
+
+
+
+
     func numericToE164(_ number: Int, countryCode: String = "1") -> String {
         return "+1\(number)"
     }
-}
+}*/
 
 
+/*
 // MARK: - Preview
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
+    }
+}
+*/
+import SwiftUI
+import MapKit
+import CoreLocation
+
+// MARK: - Map Annotation Model
+struct MapLocation: Identifiable, Hashable, Equatable {
+    let id = UUID()
+    let name: String
+    let coordinate: CLLocationCoordinate2D
+    let type: LocationType
+
+    enum LocationType: Hashable {
+        case hospital
+        case shelter
+        case user
+    }
+
+    static func == (lhs: MapLocation, rhs: MapLocation) -> Bool {
+        return lhs.coordinate.latitude == rhs.coordinate.latitude &&
+               lhs.coordinate.longitude == rhs.coordinate.longitude &&
+               lhs.name == rhs.name &&
+               lhs.type == rhs.type
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(name)
+        hasher.combine(coordinate.latitude)
+        hasher.combine(coordinate.longitude)
+        hasher.combine(type)
+    }
+}
+
+
+// MARK: - MapViewContainer
+final class MapViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
+    @Published var region = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 43.262, longitude: -79.919),
+        span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+    )
+    @Published var annotations: [MapLocation] = []
+
+    public let locationManager = CLLocationManager()
+    func requestAuthorization() {
+            locationManager.requestWhenInUseAuthorization()
+            locationManager.startUpdatingLocation()
+        }
+
+    override init() {
+        super.init()
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.startUpdatingLocation()
+        locationManager.requestWhenInUseAuthorization()
+    }
+
+    // MARK: - User Location
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let loc = locations.last else { return }
+        DispatchQueue.main.async {
+            self.region.center = loc.coordinate
+            // Add user annotation
+            if !self.annotations.contains(where: { $0.type == .user }) {
+                self.annotations.append(MapLocation(name: "You", coordinate: loc.coordinate, type: .user))
+            }
+        }
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Location error: \(error)")
+    }
+
+    // MARK: - Search Functions
+    // MARK: - Search Functions (FIXED)
+    func findHospitals() {
+        // Use natural language query instead of POI filter for better results
+        searchPOI(query: "hospital", poiFilter: nil, type: .hospital)
+    }
+
+    func findShelters() {
+        // Try multiple queries for better coverage
+        searchPOI(query: "community center", poiFilter: nil, type: .shelter)
+        // Also search for fire stations as emergency gathering points
+        searchPOI(query: "fire station", poiFilter: nil, type: .shelter)
+    }
+
+    private func searchPOI(query: String?, poiFilter: MKPointOfInterestFilter?, type: MapLocation.LocationType) {
+        guard let coord = currentCoordinate else {
+            print("⚠️ Current location not available yet")
+            return
+        }
+        
+        let request = MKLocalSearch.Request()
+        request.region = MKCoordinateRegion(
+            center: coord,
+            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)  // Increased search radius
+        )
+        
+        if let q = query {
+            request.naturalLanguageQuery = q
+        }
+        if let filter = poiFilter {
+            request.pointOfInterestFilter = filter
+        }
+
+        let search = MKLocalSearch(request: request)
+        search.start { response, error in
+            if let error = error {
+                print("⚠️ Search error for \(query ?? "POI"): \(error.localizedDescription)")
+                return
+            }
+            
+            guard let items = response?.mapItems else {
+                print("⚠️ No results found for \(query ?? "POI")")
+                return
+            }
+            
+            print("✅ Found \(items.count) results for \(query ?? "POI")")
+            
+            let newAnnotations = items.map {
+                MapLocation(
+                    name: $0.name ?? "Unknown",
+                    coordinate: $0.placemark.coordinate,
+                    type: type
+                )
+            }
+            
+            DispatchQueue.main.async {
+                for ann in newAnnotations {
+                    if !self.annotations.contains(where: {
+                        $0.coordinate.latitude == ann.coordinate.latitude &&
+                        $0.coordinate.longitude == ann.coordinate.longitude
+                    }) {
+                        self.annotations.append(ann)
+                    }
+                }
+            }
+        }
+    }
+
+    // Add this helper to check location authorization status
+    func checkLocationStatus() -> String {
+        let status = locationManager.authorizationStatus
+        switch status {
+        case .notDetermined:
+            return "Not Determined - Request authorization"
+        case .restricted:
+            return "Restricted"
+        case .denied:
+            return "Denied - Check Settings"
+        case .authorizedAlways, .authorizedWhenInUse:
+            return "Authorized"
+        @unknown default:
+            return "Unknown"
+        }
+    }
+
+    var currentCoordinate: CLLocationCoordinate2D? {
+        locationManager.location?.coordinate
+    }
+
+    // MARK: - Optional: Route to a location
+    func openInMaps(_ location: MapLocation) {
+        let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: location.coordinate))
+        mapItem.name = location.name
+        mapItem.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
+    }
+}
+
+// MARK: - SwiftUI MapView
+import SwiftUI
+import MapKit
+
+struct MapViewContainer: View {
+    @StateObject private var vm = MapViewModel()
+    @State private var showList = true
+    @State private var selectedFilter: Filter = .none
+    @State private var searchText = ""
+
+    enum Filter: String, CaseIterable { case none = "All", hospital = "Hospitals", shelter = "Shelters" }
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                // MAP
+                Map(
+                    coordinateRegion: $vm.region,
+                    showsUserLocation: true,
+                    annotationItems: filteredAnnotations
+                ) { location in
+                    MapAnnotation(coordinate: location.coordinate) {
+                        MapPinView(type: location.type)
+                            .onTapGesture { vm.openInMaps(location) }
+                            .accessibilityLabel(Text(location.name))
+                    }
+                }
+                .ignoresSafeArea(edges: .bottom)
+
+                // TOP BAR (search + filter chips)
+                VStack(spacing: 12) {
+                    HStack(spacing: 10) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "magnifyingglass")
+                            TextField("Search nearby (e.g. clinic, shelter)", text: $searchText, onCommit: {
+                                vm.search(query: searchText)
+                            })
+                        }
+                        .padding(.horizontal, 12)
+                        .frame(height: 40)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                        Button {
+                            vm.refreshNearby()
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 16, weight: .semibold))
+                        }
+                        .buttonStyle(.plain)
+                        .frame(width: 40, height: 40)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                        .accessibilityLabel("Refresh nearby")
+                    }
+                    .padding(.horizontal)
+
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(Filter.allCases, id: \.self) { f in
+                                FilterChip(title: f.rawValue, isOn: selectedFilter == f) {
+                                    selectedFilter = f
+                                    switch f {
+                                    case .hospital: vm.findHospitals()
+                                    case .shelter:  vm.findShelters()
+                                    case .none:     vm.refreshNearby()
+                                    }
+                                }
+                                .disabled(vm.currentCoordinate == nil)
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                    Spacer()
+                }
+                .padding(.top, 8)
+
+                // FLOATING BUTTONS
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 12) {
+                            FloatingCircleButton(icon: "location.fill") {
+                                vm.recenter()
+                            }
+                            .disabled(vm.currentCoordinate == nil)
+
+                            FloatingCircleButton(icon: showList ? "chevron.down" : "chevron.up") {
+                                withAnimation(.spring()) { showList.toggle() }
+                            }
+                        }
+                        .padding(.trailing, 16)
+                        .padding(.bottom, 110) // leave room for sheet
+                    }
+                }
+
+                // BOTTOM SHEET (results)
+                if showList {
+                    BottomSheet {
+                        if vm.isLoading {
+                            ProgressView().padding(.vertical, 16)
+                        }
+
+                        if filteredAnnotations.isEmpty && !vm.isLoading {
+                            VStack(spacing: 8) {
+                                Image(systemName: "mappin.slash")
+                                    .font(.system(size: 28, weight: .semibold))
+                                Text("No places found nearby")
+                                    .font(.headline)
+                                Text("Try expanding your search or moving the map.")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 24)
+                        } else {
+                            ForEach(filteredAnnotations) { item in
+                                ResultRow(item: item) {
+                                    vm.openInMaps(item)
+                                }
+                                Divider()
+                            }
+                        }
+                    }
+                }
+
+                // PERMISSION BANNER
+                if vm.currentCoordinate == nil {
+                    PermissionBanner(text: "Enable Location to find nearby hospitals and shelters") {
+                        vm.requestAuthorization()
+                    }
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Map")
+                        .font(.system(size: 18, weight: .semibold, design: .default))
+                }
+            }
+        }
+        .onAppear {
+            vm.requestAuthorization()
+            // Debug prints kept if you like:
+            print("Location Status: \(vm.checkLocationStatus())")
+            print("Current Coordinate: \(vm.currentCoordinate?.latitude ?? 0), \(vm.currentCoordinate?.longitude ?? 0)")
+        }
+    }
+
+    // MARK: - Filtering
+    private var filteredAnnotations: [POI] {
+        switch selectedFilter {
+        case .none:      return vm.annotations
+        case .hospital:  return vm.annotations.filter { $0.type == .hospital }
+        case .shelter:   return vm.annotations.filter { $0.type == .shelter }
+        }
+    }
+}
+
+// MARK: - Components
+
+private struct FilterChip: View {
+    let title: String
+    var isOn: Bool
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(isOn ? Color.accentColor.opacity(0.15) : Color.secondary.opacity(0.12))
+                .foregroundColor(isOn ? .accentColor : .primary)
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct FloatingCircleButton: View {
+    let icon: String
+    var action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .semibold))
+                .frame(width: 44, height: 44)
+        }
+        .background(.ultraThinMaterial, in: Circle())
+        .shadow(radius: 6, y: 2)
+        .buttonStyle(.plain)
+    }
+}
+
+private struct BottomSheet<Content: View>: View {
+    @ViewBuilder var content: Content
+    var body: some View {
+        VStack(spacing: 0) {
+            Capsule()
+                .fill(Color.secondary.opacity(0.35))
+                .frame(width: 40, height: 5)
+                .padding(.top, 8)
+                .padding(.bottom, 6)
+            ScrollView {
+                VStack(spacing: 0) { content }
+                    .padding(.horizontal)
+                    .padding(.bottom, 12)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .shadow(radius: 12)
+        .padding(.horizontal, 10)
+        .padding(.bottom, 8)
+        .frame(maxHeight: UIScreen.main.bounds.height * 0.38, alignment: .bottom)
+        .position(x: UIScreen.main.bounds.midX, y: UIScreen.main.bounds.height - 120)
+        .allowsHitTesting(true)
+    }
+}
+
+private struct ResultRow: View {
+    let item: POI
+    var routeAction: () -> Void
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            MapPinView(type: item.type)
+                .frame(width: 36, height: 36)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.name)
+                    .font(.headline)
+                if let d = item.distanceString {
+                    Text(d)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                if let addr = item.subtitle, !addr.isEmpty {
+                    Text(addr)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
+            }
+            Spacer()
+            Button(action: routeAction) {
+                Label("Route", systemImage: "arrow.triangle.turn.up.right.diamond.fill")
+                    .labelStyle(.titleAndIcon)
+                    .font(.subheadline.weight(.semibold))
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .padding(.vertical, 10)
+    }
+}
+
+private struct MapPinView: View {
+    enum PinStyle { case hospital, shelter, user }
+    let type: POI.Kind
+
+    var body: some View {
+        let (symbol, color): (String, Color) = {
+            switch type {
+            case .hospital: return ("cross.fill", .red)
+            case .shelter:  return ("house.fill", .blue)
+            case .other:    return ("mappin.circle.fill", .green)
+            }
+        }()
+
+        ZStack {
+            Circle().fill(color.opacity(0.15))
+            Image(systemName: symbol)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(color)
+        }
+        .frame(width: 32, height: 32)
+        .overlay(
+            Circle().stroke(Color.white, lineWidth: 1)
+                .shadow(color: .black.opacity(0.15), radius: 2, x: 0, y: 1)
+        )
+    }
+}
+
+private struct PermissionBanner: View {
+    let text: String
+    var onTap: () -> Void
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "location.slash")
+            Text(text)
+                .font(.subheadline)
+            Spacer()
+            Button("Enable", action: onTap)
+                .buttonStyle(.borderedProminent)
+        }
+        .padding(12)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal)
+        .padding(.top, 8)
+    }
+}
+
+
+import SwiftUI
+
+// MARK: - Alert Model
+struct EmergencyAlert: Identifiable {
+    let id = UUID()
+    let message: String
+    let timestamp: Date
+}
+
+// MARK: - Main App View (with Alert System)
+import SwiftUI
+
+// MARK: - Alert Model
+
+// MARK: - Main App View (with Alert System)
+import SwiftUI
+import MapKit
+import CoreLocation
+
+// MARK: - Brand Colors
+private enum Brand {
+    static let ink       = Color(red: 28/255,  green: 27/255,  blue: 41/255)   // deep plum/ink
+    static let canvas    = Color(.systemBackground)
+    static let card      = Color.white
+    static let subtle    = Color.black.opacity(0.06)
+    static let accent    = Color(red: 92/255,  green: 71/255,  blue: 200/255)  // soft purple
+    static let ok        = Color(hex: "#18894A")
+    static let warnRed   = Color(hex: "#E53935")
+    static let waterBlue = Color(hex: "#1E88E5")
+    static let soundOrg  = Color(hex: "#FB8C00")
+}
+
+extension Color {
+    init(hex: String) {
+        var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
+        var rgb: UInt64 = 0
+        Scanner(string: hexSanitized).scanHexInt64(&rgb)
+        let r = Double((rgb & 0xFF0000) >> 16) / 255.0
+        let g = Double((rgb & 0x00FF00) >> 8)  / 255.0
+        let b = Double(rgb & 0x0000FF) / 255.0
+        self = Color(red: r, green: g, blue: b)
+    }
+}
+
+// MARK: - Main App View (with polished UI)
+struct MainAppView: View {
+
+    @StateObject private var earthquakeDetector = EarthquakeDetector()
+    @StateObject private var waterDetector      = WaterSubmersionSimulator()
+    @StateObject private var soundDetector      = SoundDetector()
+    @StateObject private var locationManager    = LocationManager()
+
+    // Alert state
+    @State private var showAlert      = false
+    @State private var currentAlert: EmergencyAlert?
+    @State private var alertTimer: Timer?
+    @State private var countdown      = 30
+    @State private var userMarkedSafe = false
+
+    @State private var region = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 0, longitude: 0),
+        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+    )
+
+    // Bottom tab
+    @State private var currentTab: Tab = .home
+    enum Tab { case home, map, profile }
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                // Background
+                LinearGradient(
+                    gradient: Gradient(colors: [Brand.canvas, Color.white]),
+                    startPoint: .top, endPoint: .bottom
+                )
+                .ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    // Header
+                    header
+
+                    // Content
+                    ScrollView(showsIndicators: false) {
+                        VStack(alignment: .leading, spacing: 18) {
+                            Text("Monitoring…")
+                                .font(.system(size: 32, weight: .heavy, design: .serif))
+                                .foregroundColor(Brand.ink)
+                                .padding(.top, 6)
+
+                            StatusCard(
+                                icon: "globe.europe.africa.fill",
+                                iconTint: Brand.accent,
+                                title: "Earth Quake Detection",
+                                statusText: earthquakeDetector.earthquakeDetected ? "⚠️ Earthquake Detected!" : "Status: None",
+                                statusColor: earthquakeDetector.earthquakeDetected ? Brand.warnRed : Brand.ok
+                            )
+
+                            StatusCard(
+                                icon: "drop.fill",
+                                iconTint: Brand.waterBlue,
+                                title: "Water Detection",
+                                statusText: waterDetector.isSubmerged ? "⚠️ Device Submerged!" : "Status: None",
+                                statusColor: waterDetector.isSubmerged ? Brand.waterBlue : Brand.ok
+                            )
+
+                            StatusCard(
+                                icon: "speaker.wave.3.fill",
+                                iconTint: Brand.soundOrg,
+                                title: "Sound Detection",
+                                statusText: soundDetector.highIntensityDetected ? "⚠️ Loud Sound Detected!" : "Status: None",
+                                statusColor: soundDetector.highIntensityDetected ? Brand.soundOrg : Brand.ok
+                            )
+
+                            // App wordmark
+                            Text("Seismo")
+                                .font(.system(size: 38, weight: .bold, design: .serif))
+                                .foregroundColor(Brand.ink)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .padding(.top, 10)
+                                .padding(.bottom, 90) // room for tab bar
+                        }
+                        .padding(.horizontal, 22)
+                        .padding(.top, 8)
+                    }
+
+                    // Bottom Tab Bar
+                    //bottomTabBar
+                }
+                .ignoresSafeArea(edges: .bottom)
+
+                // Full-screen alert overlay
+                if showAlert, let alert = currentAlert {
+                    alertOverlay(message: alert.message)
+                        .transition(.opacity)
+                }
+            }
+            .navigationBarHidden(true)
+        }
+        .onAppear {
+            startAll()
+            locationManager.requestAuthorization()
+            locationManager.startTracking()
+        }
+        .onDisappear { stopAll() }
+        .onChange(of: locationManager.lastLocation) { loc in
+            if let loc = loc { region.center = loc.coordinate }
+        }
+        .onChange(of: earthquakeDetector.earthquakeDetected) { detected in
+            if detected { triggerAlert(message: "⚠️ Earthquake Detected!") }
+        }
+        .onChange(of: waterDetector.isSubmerged) { submerged in
+            if submerged { triggerAlert(message: "⚠️ Device Submerged in Water!") }
+        }
+        .onChange(of: soundDetector.highIntensityDetected) { detected in
+            if detected { triggerAlert(message: "⚠️ High Intensity Sound Detected!") }
+        }
+    }
+
+    // MARK: Header
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Hello, \(SupabaseManager.shared.getUserName().isEmpty ? "Luna" : SupabaseManager.shared.getUserName())")
+                .font(.system(size: 44, weight: .black, design: .serif))
+                .foregroundColor(Brand.ink)
+
+            Text("\(formattedLocation()), \(formattedTime())")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+
+            Text(activeDisasterLine())
+                .font(.subheadline.weight(.semibold))
+                .foregroundColor(.secondary)
+        }
+        .padding(.top, 20)
+        .padding(.horizontal, 22)
+        .padding(.bottom, 8)
+    }
+
+    // MARK: Bottom Tab Bar
+    /*
+    private var bottomTabBar: some View {
+        HStack {
+            TabButton(system: "house.fill", label: "Home", isActive: currentTab == .home) { currentTab = .home }
+            Spacer()
+            TabButton(system: "mappin.and.ellipse", label: "Map", isActive: currentTab == .map) { currentTab = .map }
+            Spacer()
+            TabButton(system: "person.fill", label: "You", isActive: currentTab == .profile) { currentTab = .profile }
+        }
+        .padding(.horizontal, 34)
+        .padding(.top, 10)
+        .padding(.bottom, 26)
+        .background(.ultraThinMaterial)
+        .overlay(Divider().offset(y: -1), alignment: .top)
+    }*/
+
+    // MARK: Alert Overlay
+    @ViewBuilder
+    private func alertOverlay(message: String) -> some View {
+        ZStack {
+            Color.black.opacity(0.75).ignoresSafeArea()
+            VStack(spacing: 22) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 80))
+                    .foregroundStyle(Brand.warnRed)
+
+                Text(message)
+                    .font(.title.bold())
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+
+                VStack(spacing: 6) {
+                    Text("Emergency contacts will be notified in:")
+                        .font(.headline)
+                        .foregroundColor(.white.opacity(0.9))
+
+                    Text("\(countdown)")
+                        .font(.system(size: 72, weight: .bold))
+                        .foregroundColor(countdown <= 10 ? Brand.warnRed : .yellow)
+                        .animation(.easeInOut, value: countdown)
+
+                    Text("seconds")
+                        .font(.headline)
+                        .foregroundColor(.white.opacity(0.9))
+                }
+                .padding(.vertical, 8)
+
+                Button(action: dismissAlert) {
+                    HStack(spacing: 10) {
+                        Image(systemName: userMarkedSafe ? "checkmark.circle.fill" : "hand.raised.fill")
+                            .font(.title2)
+                        Text(userMarkedSafe ? "MARKED SAFE ✓" : "I'M SAFE — CANCEL ALERT")
+                            .font(.title3.bold())
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(userMarkedSafe ? Brand.accent : Brand.ok)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                }
+                .padding(.horizontal, 28)
+                .padding(.bottom, 6)
+                .disabled(userMarkedSafe)
+            }
+            .padding(.vertical, 28)
+            .frame(maxWidth: 420)
+            .background(Color(.secondarySystemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .shadow(radius: 24)
+            .padding()
+        }
+    }
+
+    // MARK: Helpers
+    private func formattedTime() -> String {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        return f.string(from: Date())
+    }
+
+    private func formattedLocation() -> String {
+        guard let loc = locationManager.lastLocation else { return "Location" }
+        return String(format: "%.4f, %.4f", loc.coordinate.latitude, loc.coordinate.longitude)
+    }
+
+    private func activeDisasterLine() -> String {
+        if earthquakeDetector.earthquakeDetected || waterDetector.isSubmerged || soundDetector.highIntensityDetected {
+            return "⚠️ Warning active"
+        }
+        return "No natural disasters reported"
+    }
+
+    private func statusView(title: String, isActive: Bool, activeText: String, color: Color) -> some View {
+        // (Kept for compatibility if you still call this elsewhere.)
+        VStack {
+            Text(title).font(.headline)
+            Text(isActive ? activeText : "Monitoring…")
+                .font(.title2)
+                .foregroundColor(isActive ? color : Brand.ok)
+        }
+    }
+
+    private func startAll() {
+        earthquakeDetector.startDetection()
+        waterDetector.startMonitoring()
+        soundDetector.startMonitoring()
+        locationManager.startTracking()
+    }
+
+    private func stopAll() {
+        earthquakeDetector.stopDetection()
+        waterDetector.stopMonitoring()
+        soundDetector.stopMonitoring()
+        locationManager.stopTracking()
+        alertTimer?.invalidate()
+    }
+
+    // MARK: Alert Logic (unchanged)
+    private func triggerAlert(message: String) {
+        guard !showAlert else { return }
+
+        currentAlert = EmergencyAlert(message: message, timestamp: Date())
+        countdown = 30
+        showAlert = true
+
+        // SMS to user
+        let userPhone = SupabaseManager.shared.getUserPhone()
+        if !userPhone.isEmpty {
+            var userMessage = "⚠️ \(message)\nReply YES to cancel emergency contact notification."
+            if let loc = locationManager.lastLocation {
+                userMessage += "\nLocation: https://maps.apple.com/?ll=\(loc.coordinate.latitude),\(loc.coordinate.longitude)"
+            }
+            TwilioManager.shared.sendSMS(to: userPhone, message: userMessage)
+        }
+
+        alertTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
+            countdown -= 1
+            if countdown <= 0 {
+                timer.invalidate()
+                alertTimer = nil
+                sendToContacts(message: message)
+                dismissAlert()
+            }
+        }
+    }
+
+    private func dismissAlert() {
+        alertTimer?.invalidate()
+        alertTimer = nil
+
+        withAnimation { userMarkedSafe = true }
+        SupabaseManager.shared.userConfirmedAlert = true
+
+        let userPhone = SupabaseManager.shared.getUserPhone()
+        if !userPhone.isEmpty {
+            TwilioManager.shared.sendSMS(to: userPhone, message: "✅ Alert cancelled. You marked yourself as safe.")
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            withAnimation { showAlert = false }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                currentAlert = nil
+                userMarkedSafe = false
+                SupabaseManager.shared.userConfirmedAlert = false
+            }
+        }
+    }
+
+    private func sendToContacts(message: String) {
+        SupabaseManager.shared.fetchContacts { contacts in
+            let phoneNumbers = contacts.map { contact in
+                var num = contact.number.trimmingCharacters(in: .whitespacesAndNewlines)
+                num = num.replacingOccurrences(of: "^\\+?1?", with: "", options: .regularExpression)
+                return "+1\(num)"
+            }
+
+            var fullMessage = message
+            if let loc = locationManager.lastLocation {
+                fullMessage += "\nUser: \(SupabaseManager.shared.getUserName())\nLocation: https://maps.apple.com/?ll=\(loc.coordinate.latitude),\(loc.coordinate.longitude)"
+            }
+
+            for number in phoneNumbers {
+                TwilioManager.shared.sendSMS(to: number, message: fullMessage)
+            }
+            DispatchQueue.main.async { print("[Alert] Emergency contacts notified.") }
+        }
+    }
+}
+
+// MARK: - Reusable Views
+
+private struct StatusCard: View {
+    let icon: String
+    let iconTint: Color
+    let title: String
+    let statusText: String
+    let statusColor: Color
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            ZStack {
+                Circle().fill(iconTint.opacity(0.15))
+                Image(systemName: icon)
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundStyle(iconTint)
+            }
+            .frame(width: 50, height: 50)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                Text(statusText)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(statusColor)
+            }
+            Spacer()
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Brand.card)
+                .shadow(color: Brand.subtle, radius: 12, x: 0, y: 6)
+        )
+    }
+}
+
+private struct TabButton: View {
+    let system: String
+    let label: String
+    let isActive: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Image(systemName: system)
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundColor(isActive ? Brand.accent : .secondary)
+                Circle()
+                    .fill(isActive ? Brand.accent : .clear)
+                    .frame(width: 6, height: 6)
+                    .opacity(isActive ? 1 : 0)
+                    .animation(.easeInOut(duration: 0.2), value: isActive)
+            }
+        }
+        .buttonStyle(.plain)
     }
 }
