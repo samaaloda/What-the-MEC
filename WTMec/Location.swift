@@ -1,59 +1,73 @@
-//
-//  F.swift
-//  WTMec
-//
-//  Created by Luna Almoayad on 2025-11-09.
-//
-
 import Foundation
 import CoreLocation
 import Combine
 
 final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
-    @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
+    @Published var authorizationStatus: CLAuthorizationStatus
     @Published var lastLocation: CLLocation?
     @Published var path: [CLLocationCoordinate2D] = []
 
     private let manager = CLLocationManager()
+    private var isTracking = false
 
     override init() {
+        self.authorizationStatus = manager.authorizationStatus
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
-        manager.distanceFilter = 5          // meters between updates (tune for battery)
+        manager.distanceFilter = 5
         manager.pausesLocationUpdatesAutomatically = true
-        manager.activityType = .fitness     // or .otherNavigation for driving/evac routes
+        manager.activityType = .fitness
     }
 
-    func requestAuth() {
-        // Ask for "Always" only if you truly need it; otherwise WhenInUse is better.
-        manager.requestWhenInUseAuthorization()
-        // Later, if needed: manager.requestAlwaysAuthorization()
+    func requestAuthorization() {
+        switch manager.authorizationStatus {
+        case .notDetermined:
+            manager.requestWhenInUseAuthorization()
+        case .restricted, .denied:
+            print("Location access restricted or denied")
+        case .authorizedWhenInUse, .authorizedAlways:
+            startTracking()
+        @unknown default:
+            break
+        }
     }
 
     func startTracking() {
-        if CLLocationManager.locationServicesEnabled() {
+        guard CLLocationManager.locationServicesEnabled() else {
+            print("Location services are disabled")
+            return
+        }
+
+        if (authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways) && !isTracking {
             manager.startUpdatingLocation()
-            // For big jumps + low battery usage, consider: manager.startMonitoringSignificantLocationChanges()
+            isTracking = true
+        } else if authorizationStatus == .notDetermined {
+            requestAuthorization()
         }
     }
 
     func stopTracking() {
-        manager.stopUpdatingLocation()
+        if isTracking {
+            manager.stopUpdatingLocation()
+            isTracking = false
+        }
     }
 
     // MARK: - CLLocationManagerDelegate
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         authorizationStatus = manager.authorizationStatus
-        if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
+        if authorizationStatus == .authorizedAlways || authorizationStatus == .authorizedWhenInUse {
             startTracking()
         }
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let loc = locations.last else { return }
-        lastLocation = loc
-        path.append(loc.coordinate)
+        guard let location = locations.last else { return }
+        if location.horizontalAccuracy >= 0 && location.horizontalAccuracy < 50 {
+            lastLocation = location
+            path.append(location.coordinate)
+        }
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {

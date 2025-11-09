@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>This app requires your location to display it on the map and send alerts with location info.</string>
+
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>This app may access your location in the background to track emergencies and send alerts.</string>
+
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>This app may access your location in the background to track emergencies and send alerts.</string>
+</dict>
+</plist>

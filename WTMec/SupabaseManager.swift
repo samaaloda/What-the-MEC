@@ -10,7 +10,7 @@ final class SupabaseManager: ObservableObject {
     private init() {
         client = SupabaseClient(
             supabaseURL: URL(string: "https://gsgjcltslhxllyhaswme.supabase.co")!,
-            supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzZ2pjbHRzbGh4bGx5aGFzd21lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2ODY2NzksImV4cCI6MjA3ODI2MjY3OX0.wWzrDs75aHI3XBMAZsDbsybbYdBEON0tRAP0n0b3s24"
+            supabaseKey: Config.supabaseApiKey
         )
         
         // Check if user is already signed in on app launch

@@ -2,47 +2,41 @@ import CoreMotion
 import Foundation
 
 class WaterSubmersionSimulator: ObservableObject {
-    private let motionManager = CMMotionManager()
     private let altimeter = CMAltimeter()
-    
     @Published var isSubmerged = false
-    
-    private var lowMotionStart: Date?
-    
+
+    // Threshold in kPa for submersion
+    private let waterPressureThreshold = 1.0 // ~1 kPa above normal air pressure
+
+    private var baselinePressure: Double?
+
     func startMonitoring() {
-        // Motion updates
-        motionManager.deviceMotionUpdateInterval = 0.1
-        motionManager.startDeviceMotionUpdates(to: .main) { [weak self] data, _ in
+        guard CMAltimeter.isRelativeAltitudeAvailable() else { return }
+
+        altimeter.startRelativeAltitudeUpdates(to: .main) { [weak self] data, error in
             guard let self = self, let data = data else { return }
-            let acc = data.userAcceleration
-            let totalAcc = sqrt(acc.x*acc.x + acc.y*acc.y + acc.z*acc.z)
             
-            if totalAcc < 0.05 { // almost stationary
-                if self.lowMotionStart == nil {
-                    self.lowMotionStart = Date()
-                } else if Date().timeIntervalSince(self.lowMotionStart!) > 5 {
-                    self.isSubmerged = true
-                }
-            } else {
-                self.lowMotionStart = nil
-                self.isSubmerged = false
+            let pressure = data.pressure.doubleValue // in kPa
+
+            // Set baseline if not already set
+            if self.baselinePressure == nil {
+                self.baselinePressure = pressure
             }
-        }
-        
-        // Altimeter updates
-        if CMAltimeter.isRelativeAltitudeAvailable() {
-            altimeter.startRelativeAltitudeUpdates(to: .main) { [weak self] data, _ in
-                guard let self = self, let data = data else { return }
-                if data.pressure.doubleValue < -5 { // example threshold
+
+            if let baseline = self.baselinePressure {
+                // If pressure rises significantly, consider submerged
+                if pressure - baseline > self.waterPressureThreshold {
                     self.isSubmerged = true
+                } else {
+                    self.isSubmerged = false
                 }
             }
         }
     }
-    
+
     func stopMonitoring() {
-        motionManager.stopDeviceMotionUpdates()
         altimeter.stopRelativeAltitudeUpdates()
         isSubmerged = false
+        baselinePressure = nil
     }
 }

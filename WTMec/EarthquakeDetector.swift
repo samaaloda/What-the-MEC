@@ -37,7 +37,7 @@ class EarthquakeDetector: ObservableObject {
             if let data = motionData {
                 let userAcc = data.userAcceleration
                 let totalAcc = sqrt(userAcc.x * userAcc.x + userAcc.y * userAcc.y + userAcc.z * userAcc.z)
-                print("hello \(totalAcc)")
+                //print("hello \(totalAcc)")
                 if totalAcc > self.accelerationThreshold {
                     // Start timing if shake starts
                     if self.shakeStartTime == nil {

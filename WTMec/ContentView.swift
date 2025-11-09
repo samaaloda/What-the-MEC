@@ -1,6 +1,22 @@
 import SwiftUI
 import MapKit
 
+
+import SwiftUI
+
+struct ContentView: View {
+    var body: some View {
+        Button("Send Test SMS") {
+            TwilioManager.shared.sendSMS(to: "+16475136253", message: "Hello from Swift!")
+        }
+        .padding()
+        .background(Color.blue)
+        .foregroundColor(.white)
+        .cornerRadius(8)
+    }
+}
+
+/*
 // MARK: - Root ContentView
 struct ContentView: View {
     @ObservedObject private var supabase = SupabaseManager.shared
@@ -20,7 +36,7 @@ struct ContentView: View {
             }
         }
     }
-}
+}*/
 
 // MARK: - SignUp View
 struct SignUpView: View {
@@ -391,8 +407,9 @@ struct MainAppView: View {
             .navigationTitle("Monitoring")
         }
         .onAppear {
-            startAll()
-            locationManager.requestAuth()
+            startAll() // your existing detectors
+            locationManager.requestAuthorization()
+            locationManager.startTracking()
         }
         .onDisappear { stopAll() }
         .onChange(of: locationManager.lastLocation) { loc in
@@ -409,6 +426,12 @@ struct MainAppView: View {
         .onChange(of: soundDetector.highIntensityDetected) { detected in
             if detected { sendAlert(message: "⚠️ High Intensity Sound Detected!") }
         }
+        .onChange(of: locationManager.lastLocation) { loc in
+            if let loc = loc {
+                region.center = loc.coordinate
+            }
+        }
+
     }
     
     // MARK: - Helpers
@@ -436,15 +459,30 @@ struct MainAppView: View {
     }
     
     private func sendAlert(message: String) {
-        var fullMessage = message
-        if let loc = locationManager.lastLocation {
-            fullMessage += "\nLocation: https://maps.apple.com/?ll=\(loc.coordinate.latitude),\(loc.coordinate.longitude)"
-        } else {
-            fullMessage += "\nLocation: unavailable"
+        SupabaseManager.shared.fetchContacts { contacts in
+            // Build the phone numbers list
+            let phoneNumbers = contacts.map { $0.number }
+
+            // Construct the full message
+            var fullMessage = message
+            if let loc = locationManager.lastLocation {
+                fullMessage += "\nLocation: https://maps.apple.com/?ll=\(loc.coordinate.latitude),\(loc.coordinate.longitude)"
+            } else {
+                fullMessage += "\nLocation: unavailable"
+            }
+
+            // Send SMS to all contacts
+            for number in phoneNumbers {
+                TwilioManager.shared.sendSMS(to: number, message: fullMessage)
+            }
         }
-        TwilioManager.shared.sendSMS(to: phoneNumber, message: fullMessage)
+    }
+
+    func numericToE164(_ number: Int, countryCode: String = "1") -> String {
+        return "+1\(number)"
     }
 }
+
 
 // MARK: - Preview
 struct ContentView_Previews: PreviewProvider {

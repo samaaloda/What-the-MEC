@@ -13,17 +13,19 @@
 		22B032862EC10A8D00508238 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 22B032852EC10A8D00508238 /* Realtime */; };
 		22B032882EC10A8D00508238 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 22B032872EC10A8D00508238 /* Storage */; };
 		22B0328A2EC10A8D00508238 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 22B032892EC10A8D00508238 /* Supabase */; };
+		22B032C52EC1321900508238 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 22B032C42EC1321100508238 /* .gitignore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		228E75B42EC0FADA009C64FF /* WTMec.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WTMec.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		22B032C42EC1321100508238 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		22B032BD2EC1119D00508238 /* Exceptions for "WTMec" folder in "WTMec" target */ = {
+		22B032C12EC1283500508238 /* Exceptions for "WTMec" folder in "WTMec" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Untitled.swift,
+				Info.plist,
 			);
 			target = 228E75B32EC0FADA009C64FF /* WTMec */;
 		};
@@ -33,7 +35,7 @@
 		228E75B62EC0FADA009C64FF /* WTMec */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				22B032BD2EC1119D00508238 /* Exceptions for "WTMec" folder in "WTMec" target */,
+				22B032C12EC1283500508238 /* Exceptions for "WTMec" folder in "WTMec" target */,
 			);
 			path = WTMec;
 			sourceTree = "<group>";
@@ -60,6 +62,7 @@
 		228E75AB2EC0FADA009C64FF = {
 			isa = PBXGroup;
 			children = (
+				22B032C42EC1321100508238 /* .gitignore */,
 				228E75B62EC0FADA009C64FF /* WTMec */,
 				228E75B52EC0FADA009C64FF /* Products */,
 			);
@@ -146,6 +149,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22B032C52EC1321900508238 /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -293,6 +297,11 @@
 				DEVELOPMENT_TEAM = BT9VTC6BJK;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WTMec/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "";
+				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "";
+				INFOPLIST_KEY_NSLocationUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -321,6 +330,11 @@
 				DEVELOPMENT_TEAM = BT9VTC6BJK;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = WTMec/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "";
+				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "";
+				INFOPLIST_KEY_NSLocationUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
