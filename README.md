@@ -21,10 +21,9 @@ Seismo is a real-time earthquake detection and alert system designed to enhance 
 - **Framework:** UIKit / SwiftUI (as applicable)  
 - **Platform:** iOS  
 - **APIs:**  
-  - USGS Earthquake API for real-time seismic event data  
   - CoreMotion for sensor access (accelerometer, gyroscope)  
   - CoreLocation for determining user coordinates  
-  - MessageUI for SMS integration  
+  - Twilio for SMS integration
 
 ## Installation & Setup
 1. Clone the repository:
@@ -46,10 +45,10 @@ Seismo is a real-time earthquake detection and alert system designed to enhance 
 3. Add your **Health ID** information and emergency contacts.  
 4. Enable **Earthquake Detection Mode** from the main dashboard.  
 5. If a seismic event is detected, the app automatically sends an SMS alert to your saved contacts and displays a safety notification.
+   
+_Note that due to limited Twilio subscription, to successfully text a number we must manually verify it first. If you intend to use this feature during testing, please send an email to (almoayal@mcmaster.ca) to verify your number, or send an alert to a previously verified number._
 
 ## Future Improvements
-- Integration with Apple HealthKit for syncing medical data.  
-- Cloud backup for health and alert data.  
 - Multi-language support.  
 - Expansion to detect other disasters such as floods or tsunamis.
 
