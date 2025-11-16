@@ -762,233 +762,6 @@ struct EmergencyAlert: Identifiable {
     let message: String
     let timestamp: Date
 }
-/*
-// MARK: - Main App View (with Alert System)
-struct MainAppView: View {
-    
-    @StateObject private var earthquakeDetector = EarthquakeDetector()
-    @StateObject private var waterDetector = WaterSubmersionSimulator()
-    @StateObject private var soundDetector = SoundDetector()
-    @StateObject private var locationManager = LocationManager()
-    
-    // Alert state
-    @State private var showAlert = false
-    @State private var currentAlert: EmergencyAlert?
-    @State private var alertTimer: Timer?
-    @State private var countdown = 10
-    
-    @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 0, longitude: 0),
-        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-    )
-    
-    var body: some View {
-        NavigationView {
-            ZStack {
-                ScrollView {
-                    VStack(spacing: 20) {
-                        
-                        statusView(title: "🌍 Earthquake Detection",
-                                   isActive: earthquakeDetector.earthquakeDetected,
-                                   activeText: "⚠️ Earthquake Detected!",
-                                   color: .red)
-                        
-                        statusView(title: "💧 Water Submersion Detection",
-                                   isActive: waterDetector.isSubmerged,
-                                   activeText: "⚠️ Device Submerged!",
-                                   color: .blue)
-                        
-                        statusView(title: "🔊 High Intensity Sound Detection",
-                                   isActive: soundDetector.highIntensityDetected,
-                                   activeText: "⚠️ Loud Sound Detected!",
-                                   color: .orange)
-                    }
-                    .padding()
-                }
-                
-                // Full-screen alert overlay
-                if showAlert, let alert = currentAlert {
-                    ZStack {
-                        Color.black.opacity(0.8)
-                            .ignoresSafeArea()
-                        
-                        VStack(spacing: 30) {
-                            // Alert icon
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .font(.system(size: 80))
-                                .foregroundColor(.red)
-                                .padding(.top, 40)
-                            
-                            // Alert message
-                            Text(alert.message)
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .foregroundColor(.white)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal)
-                            
-                            // Countdown
-                            VStack(spacing: 10) {
-                                Text("Emergency contacts will be notified in:")
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                
-                                Text("\(countdown)")
-                                    .font(.system(size: 72, weight: .bold))
-                                    .foregroundColor(countdown <= 10 ? .red : .yellow)
-                                    .animation(.easeInOut, value: countdown)
-                                
-                                Text("seconds")
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                            }
-                            .padding(.vertical, 20)
-                            
-                            // Dismiss button
-                            Button(action: dismissAlert) {
-                                Text("I'M SAFE - CANCEL ALERT")
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color.green)
-                                    .cornerRadius(15)
-                            }
-                            .padding(.horizontal, 40)
-                            .padding(.bottom, 40)
-                        }
-                        .frame(maxWidth: 400)
-                        .background(Color(red: 0.2, green: 0.2, blue: 0.2))
-                        .cornerRadius(20)
-                        .shadow(radius: 20)
-                        .padding()
-                    }
-                    .transition(.opacity)
-                }
-            }
-            .navigationTitle("Monitoring")
-        }
-        .onAppear {
-            startAll()
-            locationManager.requestAuthorization()
-            locationManager.startTracking()
-        }
-        .onDisappear { stopAll() }
-        .onChange(of: locationManager.lastLocation) { loc in
-            if let loc = loc {
-                region.center = loc.coordinate
-            }
-        }
-        .onChange(of: earthquakeDetector.earthquakeDetected) { detected in
-            if detected { triggerAlert(message: "⚠️ Earthquake Detected!") }
-        }
-        .onChange(of: waterDetector.isSubmerged) { submerged in
-            if submerged { triggerAlert(message: "⚠️ Device Submerged in Water!") }
-        }
-        .onChange(of: soundDetector.highIntensityDetected) { detected in
-            if detected { triggerAlert(message: "⚠️ High Intensity Sound Detected!") }
-        }
-    }
-    
-    // MARK: - Alert Functions
-    private func triggerAlert(message: String) {
-        // Don't trigger if already showing an alert
-        guard !showAlert else { return }
-        
-        currentAlert = EmergencyAlert(message: message, timestamp: Date())
-        countdown = 10
-        showAlert = true
-        
-        // Send immediate SMS to user
-        let userPhone = SupabaseManager.shared.getUserPhone()
-        if !userPhone.isEmpty {
-            var userMessage = "⚠️ \(message)\nReply YES to cancel emergency contact notification."
-            if let loc = locationManager.lastLocation {
-                userMessage += "\nLocation: https://maps.apple.com/?ll=\(loc.coordinate.latitude),\(loc.coordinate.longitude)"
-            }
-            TwilioManager.shared.sendSMS(to: userPhone, message: userMessage)
-        }
-        
-        // Start countdown timer
-        alertTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
-            countdown -= 1
-            
-            if countdown <= 0 {
-                timer.invalidate()
-                alertTimer = nil
-                sendToContacts(message: message)
-                dismissAlert()
-            }
-        }
-    }
-    
-    private func dismissAlert() {
-        alertTimer?.invalidate()
-        alertTimer = nil
-        
-        withAnimation {
-            showAlert = false
-        }
-        
-        // Reset user confirmation flag
-        SupabaseManager.shared.userConfirmedAlert = true
-        
-        // Reset after a delay to prepare for next alert
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            currentAlert = nil
-            SupabaseManager.shared.userConfirmedAlert = false
-        }
-    }
-    
-    // MARK: - Helpers
-    private func statusView(title: String, isActive: Bool, activeText: String, color: Color) -> some View {
-        VStack {
-            Text(title).font(.headline)
-            Text(isActive ? activeText : "Monitoring...")
-                .font(.title2)
-                .foregroundColor(isActive ? color : .green)
-        }
-    }
-    
-    private func startAll() {
-        earthquakeDetector.startDetection()
-        waterDetector.startMonitoring()
-        soundDetector.startMonitoring()
-        locationManager.startTracking()
-    }
-    
-    private func stopAll() {
-        earthquakeDetector.stopDetection()
-        waterDetector.stopMonitoring()
-        soundDetector.stopMonitoring()
-        locationManager.stopTracking()
-        alertTimer?.invalidate()
-    }
-    
-    private func sendToContacts(message: String) {
-        SupabaseManager.shared.fetchContacts { contacts in
-            let phoneNumbers = contacts.map { contact in
-                var num = contact.number.trimmingCharacters(in: .whitespacesAndNewlines)
-                num = num.replacingOccurrences(of: "^\\+?1?", with: "", options: .regularExpression)
-                return "+1\(num)"
-            }
-
-            var fullMessage = message
-            if let loc = locationManager.lastLocation {
-                fullMessage += "\nUser: \(SupabaseManager.shared.getUserName())\nLocation: https://maps.apple.com/?ll=\(loc.coordinate.latitude),\(loc.coordinate.longitude)"
-            }
-
-            for number in phoneNumbers {
-                TwilioManager.shared.sendSMS(to: number, message: fullMessage)
-            }
-            DispatchQueue.main.async {
-                print("[Alert] Emergency contacts notified.")
-            }
-        }
-    }
-}*/
-
 import SwiftUI
 import MapKit
 import CoreLocation
@@ -1168,14 +941,14 @@ struct MainAppView: View {
 
                 Text(message)
                     .font(.title.bold())
-                    .foregroundColor(.white)
+                    .foregroundColor(.black)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal)
 
                 VStack(spacing: 6) {
                     Text("Emergency contacts will be notified in:")
                         .font(.headline)
-                        .foregroundColor(.white.opacity(0.9))
+                        .foregroundColor(.black)
 
                     Text("\(countdown)")
                         .font(.system(size: 72, weight: .bold))
@@ -1184,7 +957,7 @@ struct MainAppView: View {
 
                     Text("seconds")
                         .font(.headline)
-                        .foregroundColor(.white.opacity(0.9))
+                        .foregroundColor(.black)
                 }
                 .padding(.vertical, 8)
 

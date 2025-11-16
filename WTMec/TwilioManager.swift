@@ -3,7 +3,7 @@ import Foundation
 final class TwilioManager {
     static let shared = TwilioManager()
     
-    private let baseURL = URL(string: "http://172.18.96.59:3000/send-sms")!
+    private let baseURL = URL(string: "https://what-the-mec.onrender.com/send-sms")!
     private let apiKey  = Config.twilioApiKey
     
     private init() { }
